@@ -16,8 +16,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -42,6 +44,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     String input_menu = "";
     File f;
     SQLite sqLite;
+    Msg msg1;
+    boolean first = true;
     public static final int UPDATE_TEXT = 1;
     //创建一个Handler
     private Handler handler = new Handler() {
@@ -51,9 +55,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 case UPDATE_TEXT:
                     //在这里可以进行UI操作
                     HttpPost();
-                    msgListView.setSelection(msgList.size());
-                    msgListView.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-                    adapter.notifyDataSetChanged();
                     break;
                 default:
                     break;
@@ -88,15 +89,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         input = (EditText) findViewById(R.id.input_text);
         msgListView = (ListView) findViewById(R.id.msg_list_view);
         msgListView.setAdapter(adapter);
-        msgListView.setSelection(msgList.size());
         msgListView.setDivider(null);
     }
 
     private void initMsgs() {
-        Msg msg1 = new Msg("开心机器人豆豆报道~\\(≧▽≦)/~", Msg.TYPE_RECEIVED);
-        msgList.add(msg1);
-        adapter.notifyDataSetChanged();
-        msgListView.setSelection(msgList.size());
+        if (first) {
+            msg1 = new Msg("开心机器人豆豆报道~\\(≧▽≦)/~", Msg.TYPE_RECEIVED);
+            msgList.add(msg1);
+            adapter.notifyDataSetChanged();
+        } else {
+            Msg msg1 = new Msg(menu_text, Msg.TYPE_RECEIVED);
+            msgList.add(msg1);
+            adapter.notifyDataSetChanged();
+            msgListView.setSelection(msgList.size()+1);
+        }
     }
 
     private void HttpPost() {
@@ -140,11 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             JSONObject jsonObject = new JSONObject(menu);
             text = jsonObject.getString("text");
             Log.i("text", text);
-            menu_text = text.toString();
-            Msg msg3 = new Msg(menu_text, Msg.TYPE_RECEIVED);
-            msgList.add(msg3);
-            adapter.notifyDataSetChanged();
-            msgListView.setSelection(msgList.size());
+            menu_text = text + "";
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -157,12 +159,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (!TextUtils.isEmpty(input.getText())) {
                     String content = input.getText().toString();
                     if (!"".equals(content)) {
+                        first = false;
                         Msg msg2 = new Msg(input.getText().toString(), Msg.TYPE_SENT);
                         msgList.add(msg2);
-                        msgListView.setSelection(msgList.size());
                         input_menu = input.getText().toString();
                         adapter.notifyDataSetChanged();
                         input.setText("");
+                        initMsgs();
                     } else {
                         Toast.makeText(this, "输入无效，请重新输入", Toast.LENGTH_SHORT).show();
                     }
